@@ -1,37 +1,45 @@
 package nl.bigo.retrofitoauth;
 
-import oauth.signpost.OAuthConsumer;
-import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
+import okhttp3.OkHttpClient;
+import retrofit2.Call;
+import retrofit2.GsonConverterFactory;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import se.akerfeldt.okhttp.signpost.OkHttpOAuthConsumer;
+import se.akerfeldt.okhttp.signpost.SigningInterceptor;
 
 public class JavaRetrofitTweet {
-	static String consumerKeyStr = "m97PpyRg5NrRXMmXZuZ8MbDmO";
-	static String consumerSecretStr = "AVcFK2KH50A2aLPg3TtFhf5co2nDcHpaR4ExvFD5MxnwNzNlZD";
-	static String accessTokenStr = "56252103-cUVbOmZ2mkkyrfZ2y71KXtVcCVqXeZIXIjcmwlyUs";
-	static String accessTokenSecretStr = "6UzR0ZOQr6zjfeI3wsBYe0IrlvJeM4tCctANHLizG6sTf";
+    static String consumerKeyStr = "m97PpyRg5NrRXMmXZuZ8MbDmO";
+    static String consumerSecretStr = "AVcFK2KH50A2aLPg3TtFhf5co2nDcHpaR4ExvFD5MxnwNzNlZD";
+    static String accessTokenStr = "56252103-cUVbOmZ2mkkyrfZ2y71KXtVcCVqXeZIXIjcmwlyUs";
+    static String accessTokenSecretStr = "6UzR0ZOQr6zjfeI3wsBYe0IrlvJeM4tCctANHLizG6sTf";
 
 
-	public static void main(String[] args) throws Exception {
-		OAuthConsumer oAuthConsumer = new CommonsHttpOAuthConsumer(consumerKeyStr,
-				consumerSecretStr);
-		oAuthConsumer.setTokenWithSecret(accessTokenStr, accessTokenSecretStr);
+    public static void main(String[] args) throws Exception {
 
-		HttpPost httpPost = new HttpPost(
-				"https://api.twitter.com/1.1/statuses/update.json?status=TexxstHello%20Twitter%20World.");
 
-		oAuthConsumer.sign(httpPost);
+        //consumer
+        OkHttpOAuthConsumer consumer = new OkHttpOAuthConsumer(consumerKeyStr, consumerSecretStr);
+        consumer.setTokenWithSecret(accessTokenStr, accessTokenSecretStr);
 
-		HttpClient httpClient = new DefaultHttpClient();
-		HttpResponse httpResponse = httpClient.execute(httpPost);
+        //client
+        OkHttpClient okHttpClient = new OkHttpClient.Builder().addInterceptor(new SigningInterceptor(consumer)).build();
 
-		int statusCode = httpResponse.getStatusLine().getStatusCode();
-		System.out.println(statusCode + ':'
-				+ httpResponse.getStatusLine().getReasonPhrase());
-		System.out.println(IOUtils.toString(httpResponse.getEntity().getContent()));
 
-	}
+        Retrofit retrofit = new Retrofit.Builder().baseUrl("https://api.twitter.com/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .client(okHttpClient)
+                .build();
+
+
+        TwitterService service = retrofit.create(TwitterService.class);
+        Call<TwitterDto> twitterDtoCall = service.sendPost("This is third tweet sent from Retrofit." + System.currentTimeMillis());
+        Response<TwitterDto> tempResult = twitterDtoCall.execute();
+        TwitterDto body = tempResult.body();
+        String id = body.getId_str();
+        String alice = body.getAliceSource();
+        System.out.println(id);
+        System.out.println(alice);
+
+    }
 }
