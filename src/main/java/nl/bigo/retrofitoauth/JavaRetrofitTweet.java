@@ -1,6 +1,7 @@
 package nl.bigo.retrofitoauth;
 
 import okhttp3.OkHttpClient;
+import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Call;
 import retrofit2.GsonConverterFactory;
 import retrofit2.Response;
@@ -22,8 +23,16 @@ public class JavaRetrofitTweet {
         OkHttpOAuthConsumer consumer = new OkHttpOAuthConsumer(consumerKeyStr, consumerSecretStr);
         consumer.setTokenWithSecret(accessTokenStr, accessTokenSecretStr);
 
+        //log
+        HttpLoggingInterceptor logging = new HttpLoggingInterceptor();
+        logging.setLevel(HttpLoggingInterceptor.Level.BODY);//print all
+
+
         //client
-        OkHttpClient okHttpClient = new OkHttpClient.Builder().addInterceptor(new SigningInterceptor(consumer)).build();
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .addInterceptor(new SigningInterceptor(consumer))
+                .addInterceptor(logging)
+                .build();
 
 
         Retrofit retrofit = new Retrofit.Builder().baseUrl("https://api.twitter.com/")
@@ -35,11 +44,13 @@ public class JavaRetrofitTweet {
         TwitterService service = retrofit.create(TwitterService.class);
         Call<TwitterDto> twitterDtoCall = service.sendPost("This is third tweet sent from Retrofit." + System.currentTimeMillis());
         Response<TwitterDto> tempResult = twitterDtoCall.execute();
+
         TwitterDto body = tempResult.body();
         String id = body.getId_str();
         String alice = body.getAliceSource();
         System.out.println(id);
         System.out.println(alice);
+
 
     }
 }
