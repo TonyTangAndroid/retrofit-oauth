@@ -9,6 +9,8 @@ import retrofit2.Retrofit;
 import se.akerfeldt.okhttp.signpost.OkHttpOAuthConsumer;
 import se.akerfeldt.okhttp.signpost.SigningInterceptor;
 
+import java.io.IOException;
+
 public class JavaRetrofitTweet {
     static String consumerKeyStr = "m97PpyRg5NrRXMmXZuZ8MbDmO";
     static String consumerSecretStr = "AVcFK2KH50A2aLPg3TtFhf5co2nDcHpaR4ExvFD5MxnwNzNlZD";
@@ -42,6 +44,30 @@ public class JavaRetrofitTweet {
 
 
         TwitterService service = retrofit.create(TwitterService.class);
+//        sendPost(service);
+
+
+        System.out.println();
+        System.out.println();
+
+
+        search(service, "Trump");
+
+        System.out.println();
+        System.out.println();
+
+
+    }
+
+    private static void search(TwitterService service, String keyWords) throws IOException {
+        Call<Object> twitterDtoCall = service.search(keyWords);
+        Response<Object> tempResult = twitterDtoCall.execute();
+        //the result will be printed by logging interceptor.
+        System.out.println(tempResult.body());
+    }
+
+
+    private static void sendPost(TwitterService service) throws java.io.IOException {
         Call<TwitterDto> twitterDtoCall = service.sendPost("This is third tweet sent from Retrofit." + System.currentTimeMillis());
         Response<TwitterDto> tempResult = twitterDtoCall.execute();
 
@@ -50,7 +76,5 @@ public class JavaRetrofitTweet {
         String alice = body.getAliceSource();
         System.out.println(id);
         System.out.println(alice);
-
-
     }
 }
